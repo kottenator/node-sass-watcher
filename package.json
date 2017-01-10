@@ -1,0 +1,32 @@
+{
+  "name": "node-sass-watch",
+  "version": "0.5.0",
+  "description": "SCSS watcher with post-processing.",
+  "main": "lib/index.js",
+  "bin": {
+    "node-sass-watch": "bin/node-sass-watch"
+  },
+  "dependencies": {
+    "lodash": "^4.17.4",
+    "yargs": "^6.6.0"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/kottenator/node-sass-watch.git"
+  },
+  "keywords": [
+    "node",
+    "sass",
+    "watch",
+    "post-process"
+  ],
+  "author": "kottenator",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/kottenator/node-sass-watch/issues"
+  },
+  "homepage": "https://github.com/kottenator/node-sass-watch#readme"
+}

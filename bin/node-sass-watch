@@ -1,0 +1,33 @@
+#!/usr/bin/env node
+
+var argv = require('yargs')
+  .usage('Usage: node-sass-watch <input.scss> [-o output.css] [-v] -x "post-process | ..."')
+  .demandCommand(1, 1, 'Input file path required!', 'Too many positional arguments!')
+  .option('exec', {
+    alias: 'x',
+    demand: true,
+    describe: 'Pass a command to execute; can contain | && >',
+    type: 'string',
+    default: 'echo'
+  })
+  .option('output', {
+    alias: 'o',
+    describe: 'Output CSS file path',
+    type: 'string',
+    nargs: 1
+  })
+  .option('include-path', {
+    alias: 'I',
+    describe: 'Path to look for imported files',
+    type: 'string'
+  })
+  .option('verbose', {
+    alias: 'v',
+    describe: 'Verbosity level; use multiple times, up to -vv',
+    count: true
+  })
+  .help()
+  .alias('h', 'help')
+  .argv;
+
+console.log(argv);
