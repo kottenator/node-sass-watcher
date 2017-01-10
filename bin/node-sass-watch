@@ -1,33 +1,111 @@
 #!/usr/bin/env node
 
-var argv = require('yargs')
+var path = require('path');
+var Watcher = require('../lib');
+var yargs = require('yargs');
+var argv = yargs
   .usage('Usage: node-sass-watch <input.scss> [-o output.css] [-v] -x "post-process | ..."')
-  .demandCommand(1, 1, 'Input file path required!', 'Too many positional arguments!')
-  .option('exec', {
-    alias: 'x',
-    demand: true,
-    describe: 'Pass a command to execute; can contain | && >',
+  .option('c', {
+    alias: 'command',
+    describe: 'Pass a command to execute; Shell syntax allowed',
     type: 'string',
-    default: 'echo'
+    requiresArg: true
   })
-  .option('output', {
-    alias: 'o',
+  .option('o', {
+    alias: 'output',
     describe: 'Output CSS file path',
     type: 'string',
-    nargs: 1
+    requiresArg: true
   })
-  .option('include-path', {
-    alias: 'I',
-    describe: 'Path to look for imported files',
-    type: 'string'
+  .option('r', {
+    alias: 'root-dir',
+    describe: 'Directory to watch for addition/deletion of the files; default: current directory',
+    type: 'string',
+    default: process.cwd(),
+    requiresArg: true
   })
-  .option('verbose', {
-    alias: 'v',
-    describe: 'Verbosity level; use multiple times, up to -vv',
-    count: true
+  .option('I', {
+    alias: 'include-path',
+    describe: 'Path to look for imported files; multiple',
+    type: 'string',
+    requiresArg: true
+  })
+  .option('v', {
+    alias: 'verbose',
+    describe: "Verbosity level",
+    type: 'count'
   })
   .help()
   .alias('h', 'help')
+  .version(function() {
+    return require('../package').version;
+  })
+  .alias('V', 'version')
+  .strict()
   .argv;
 
-console.log(argv);
+if (process.argv.length === 2) {
+  yargs.showHelp();
+  process.exit(1);
+}
+
+if (argv._.length === 0) {
+  console.error("Please, specify input path");
+  process.exit(1);
+}
+
+if (argv._.length > 1) {
+  console.error("Error: too many positional arguments!");
+  process.exit(1);
+}
+
+var inputPath = argv._[0];
+var outputPath = argv.output;
+
+if (outputPath instanceof Array) {
+  console.error("Error: only one output file is allowed");
+  process.exit(1);
+}
+
+var includePaths = argv.includePath ? [].concat(argv.includePath) : [];
+if(process.env.SASS_PATH) {
+  includePaths = includePaths.concat(process.env.SASS_PATH.split(/:/).map(function(f) {
+    return path.resolve(f);
+  }));
+}
+
+var rootDir = argv.rootDir;
+if (rootDir instanceof Array) {
+  console.error("Error: only one root dir is allowed");
+  process.exit(1);
+}
+
+var verbosity = argv.verbose;
+
+var commands = argv.command ? [].concat(argv.command) : [];
+
+try {
+  var watcher = new Watcher(inputPath, {
+    outputPath: outputPath,
+    includePaths: includePaths,
+    rootDir: rootDir,
+    commands: commands,
+    verbosity: verbosity,
+    autoRun: true
+  });
+
+  watcher.on('init', function() {
+    verbosity === 1 && process.stdout.write("→");
+  });
+
+  watcher.on('update', function() {
+    verbosity === 1 && process.stdout.write(".");
+  });
+} catch(e) {
+  if (e.code === 'ENOENT') {
+    console.error('Error: no such file or directory "' + e.path + '"');
+  } else {
+    console.error('Error: ' + e.message);
+  }
+  process.exit(1);
+}
