@@ -87,7 +87,7 @@ Client.prototype.parseArgs = function() {
   }
 
   this.includePaths = this.argv.includePath ? [].concat(this.argv.includePath) : [];
-  if(process.env.SASS_PATH) {
+  if (process.env.SASS_PATH) {
     this.includePaths = this.includePaths.concat(process.env.SASS_PATH.split(/:/).map(function(f) {
       return path.resolve(f);
     }));
@@ -103,7 +103,11 @@ Client.prototype.parseArgs = function() {
 
   this.verbosity = this.argv.verbose;
 
-  this.commands = this.argv.command ? [].concat(this.argv.command) : [];
+  this.command = this.argv.command;
+  if (this.command instanceof Array) {
+    console.error("Error: only one command is allowed");
+    process.exit(1);
+  }
 };
 
 Client.prototype.initWatcher = function() {
@@ -122,25 +126,20 @@ Client.prototype.initWatcher = function() {
 Client.prototype.processUpdate = function() {
   var filePath = this.watcher.inputPath;
 
-  this.commands.forEach(function(command) {
-    var subprocess = exec(
-      command.replace('<input>', filePath),
-      function(err, stdout, stderr) {
-        if (stderr) {
-          console.error(stderr);
-        }
-        if (err) {
-          console.error('Error: command "%s" exited with exit code %d', command, err.code);
-          return;
-        }
-        if (stdout) {
-          console.log(stdout);
-        }
-      }
-    );
-
-    fs.createReadStream(filePath).pipe(subprocess.stdin);
+  var subprocess = exec(this.command.replace('<input>', filePath), function(err, stdout, stderr) {
+    if (stderr) {
+      console.error(stderr);
+    }
+    if (err) {
+      console.error('Error: command "%s" exited with exit code %d', command, err.code);
+      return;
+    }
+    if (stdout) {
+      console.log(stdout);
+    }
   });
+
+  fs.createReadStream(filePath).pipe(subprocess.stdin);
 };
 
 Client.prototype.run = function() {
@@ -149,7 +148,7 @@ Client.prototype.run = function() {
 
 try {
   new Client().run();
-} catch(e) {
+} catch (e) {
   if (e.code === 'ENOENT') {
     console.error('Error: no such file or directory "' + e.path + '"');
   } else {
