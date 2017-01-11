@@ -1,106 +1,154 @@
 #!/usr/bin/env node
 
+var fs = require('fs');
 var path = require('path');
-var Watcher = require('../lib');
+var exec = require('child_process').exec;
 var yargs = require('yargs');
-var argv = yargs
-  .usage('Usage: node-sass-watch <input.scss> [-o output.css] [-v] -x "post-process | ..."')
-  .option('c', {
-    alias: 'command',
-    describe: 'Pass a command to execute; Shell syntax allowed',
-    type: 'string',
-    requiresArg: true
-  })
-  .option('o', {
-    alias: 'output',
-    describe: 'Output CSS file path',
-    type: 'string',
-    requiresArg: true
-  })
-  .option('r', {
-    alias: 'root-dir',
-    describe: 'Directory to watch for addition/deletion of the files; default: current directory',
-    type: 'string',
-    default: process.cwd(),
-    requiresArg: true
-  })
-  .option('I', {
-    alias: 'include-path',
-    describe: 'Path to look for imported files; multiple',
-    type: 'string',
-    requiresArg: true
-  })
-  .option('v', {
-    alias: 'verbose',
-    describe: "Verbosity level",
-    type: 'count'
-  })
-  .help()
-  .alias('h', 'help')
-  .version(function() {
-    return require('../package').version;
-  })
-  .alias('V', 'version')
-  .strict()
-  .argv;
+var Watcher = require('../lib');
 
-if (process.argv.length === 2) {
-  yargs.showHelp();
-  process.exit(1);
+function Client() {
+  this.initArgs();
+  this.parseArgs();
+  this.initWatcher();
 }
 
-if (argv._.length === 0) {
-  console.error("Please, specify input path");
-  process.exit(1);
-}
+Client.prototype.initArgs = function() {
+  this.yargs = yargs
+    .usage('Usage: node-sass-watch <input.scss> [-o output.css] [-v] -x "post-process | ..."')
+    .option('c', {
+      alias: 'command',
+      describe: 'Pass a command to execute; Shell syntax allowed',
+      type: 'string',
+      requiresArg: true
+    })
+    .option('o', {
+      alias: 'output',
+      describe: 'Output CSS file path',
+      type: 'string',
+      requiresArg: true
+    })
+    .option('r', {
+      alias: 'root-dir',
+      describe: 'Directory to watch for addition/deletion of the files; default: current directory',
+      type: 'string',
+      default: process.cwd(),
+      requiresArg: true
+    })
+    .option('I', {
+      alias: 'include-path',
+      describe: 'Path to look for imported files; multiple',
+      type: 'string',
+      requiresArg: true
+    })
+    .option('e', {
+      alias: 'include-extensions',
+      describe: 'File extensions to watch',
+      type: 'array',
+      default: Watcher.defaultExtensions
+    })
+    .option('v', {
+      alias: 'verbose',
+      describe: "Verbosity level",
+      type: 'count'
+    })
+    .help()
+    .alias('h', 'help')
+    .version(function() {
+      return require('../package').version;
+    })
+    .alias('V', 'version')
+    .strict();
 
-if (argv._.length > 1) {
-  console.error("Error: too many positional arguments!");
-  process.exit(1);
-}
+  this.argv = this.yargs.argv;
+};
 
-var inputPath = argv._[0];
-var outputPath = argv.output;
+Client.prototype.parseArgs = function() {
+  if (process.argv.length === 2) {
+    this.yargs.showHelp();
+    process.exit(1);
+  }
 
-if (outputPath instanceof Array) {
-  console.error("Error: only one output file is allowed");
-  process.exit(1);
-}
+  if (this.argv._.length === 0) {
+    console.error("Please, specify input path");
+    process.exit(1);
+  }
 
-var includePaths = argv.includePath ? [].concat(argv.includePath) : [];
-if(process.env.SASS_PATH) {
-  includePaths = includePaths.concat(process.env.SASS_PATH.split(/:/).map(function(f) {
-    return path.resolve(f);
-  }));
-}
+  if (this.argv._.length > 1) {
+    console.error("Error: too many positional arguments!");
+    process.exit(1);
+  }
 
-var rootDir = argv.rootDir;
-if (rootDir instanceof Array) {
-  console.error("Error: only one root dir is allowed");
-  process.exit(1);
-}
+  this.inputPath = this.argv._[0];
+  this.outputPath = this.argv.output;
 
-var verbosity = argv.verbose;
+  if (this.outputPath instanceof Array) {
+    console.error("Error: only one output file is allowed");
+    process.exit(1);
+  }
 
-var commands = argv.command ? [].concat(argv.command) : [];
+  this.includePaths = this.argv.includePath ? [].concat(this.argv.includePath) : [];
+  if(process.env.SASS_PATH) {
+    this.includePaths = this.includePaths.concat(process.env.SASS_PATH.split(/:/).map(function(f) {
+      return path.resolve(f);
+    }));
+  }
+
+  this.includeExtensions = this.argv.includeExtensions;
+
+  this.rootDir = this.argv.rootDir;
+  if (this.rootDir instanceof Array) {
+    console.error("Error: only one root dir is allowed");
+    process.exit(1);
+  }
+
+  this.verbosity = this.argv.verbose;
+
+  this.commands = this.argv.command ? [].concat(this.argv.command) : [];
+};
+
+Client.prototype.initWatcher = function() {
+  this.watcher = new Watcher(this.inputPath, {
+    outputPath: this.outputPath,
+    rootDir: this.rootDir,
+    includePaths: this.includePaths,
+    includeExtensions: this.includeExtensions,
+    verbosity: this.verbosity
+  });
+
+  this.watcher.on('init', this.processUpdate.bind(this));
+  this.watcher.on('update', this.processUpdate.bind(this));
+};
+
+Client.prototype.processUpdate = function() {
+  var filePath = this.watcher.inputPath;
+
+  this.commands.forEach(function(command) {
+    var subprocess = exec(
+      command.replace('<input>', filePath),
+      function(err, stdout, stderr) {
+        if (stderr) {
+          console.error(stderr);
+        }
+        if (err) {
+          console.error('Error: command "%s" exited with exit code %d', command, err.code);
+          return;
+        }
+        if (stdout) {
+          console.log(stdout);
+        }
+      }
+    );
+
+    fs.createReadStream(filePath).pipe(subprocess.stdin);
+  });
+};
+
+Client.prototype.run = function() {
+  this.watcher.run();
+};
 
 try {
-  var watcher = new Watcher(inputPath, {
-    outputPath: outputPath,
-    includePaths: includePaths,
-    rootDir: rootDir,
-    commands: commands,
-    verbosity: verbosity,
-    autoRun: true
-  });
-
-  watcher.on('init', function() {
-    verbosity === 1 && process.stdout.write("→");
-  });
-
-  watcher.on('update', function() {
-    verbosity === 1 && process.stdout.write(".");
-  });
+  new Client().run();
 } catch(e) {
   if (e.code === 'ENOENT') {
     console.error('Error: no such file or directory "' + e.path + '"');
