@@ -1,4 +1,4 @@
-# node-sass-watch
+# node-sass-watcher
 
 SCSS watcher with post-processing.
 
@@ -11,11 +11,11 @@ This tool provides simple way to do desired post-processing.
 ## Install
 
 ```sh
-npm install node-sass-watch
+npm install node-sass-watcher
 ```
 
 ## Usage
 
 ```sh
-node-sass-watch file.scss --exec "some-processing | another-processing"
+node-sass-watcher file.scss -c "some-processing | another-processing"
 ```

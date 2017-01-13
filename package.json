@@ -1,10 +1,10 @@
 {
-  "name": "node-sass-watch",
+  "name": "node-sass-watcher",
   "version": "0.5.0",
   "description": "SCSS watcher with post-processing.",
   "main": "lib/watcher.js",
   "bin": {
-    "node-sass-watch": "bin/node-sass-watch"
+    "node-sass-watcher": "bin/node-sass-watcher"
   },
   "dependencies": {
     "lodash.difference": "^4.5.0",
@@ -18,7 +18,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/kottenator/node-sass-watch.git"
+    "url": "git+https://github.com/kottenator/node-sass-watcher.git"
   },
   "keywords": [
     "node",
@@ -29,7 +29,7 @@
   "author": "kottenator",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/kottenator/node-sass-watch/issues"
+    "url": "https://github.com/kottenator/node-sass-watcher/issues"
   },
-  "homepage": "https://github.com/kottenator/node-sass-watch#readme"
+  "homepage": "https://github.com/kottenator/node-sass-watcher#readme"
 }
