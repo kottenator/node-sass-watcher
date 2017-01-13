@@ -2,7 +2,7 @@
   "name": "node-sass-watch",
   "version": "0.5.0",
   "description": "SCSS watcher with post-processing.",
-  "main": "lib/index.js",
+  "main": "lib/watcher.js",
   "bin": {
     "node-sass-watch": "bin/node-sass-watch"
   },
