@@ -1,8 +1,10 @@
 #!/usr/bin/env node
 
+var path = require('path');
+var Client = require('../lib/client');
+
 try {
-  var Client = require('../lib/client');
-  new Client().run();
+  new Client(path.basename(module.filename)).run();
 } catch (e) {
   if (e.code === 'ENOENT') {
     console.error('Error: no such file or directory "' + e.path + '"');
