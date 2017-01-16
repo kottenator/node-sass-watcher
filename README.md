@@ -17,5 +17,5 @@ npm install node-sass-watcher
 ## Usage
 
 ```sh
-node-sass-watcher file.scss -c "some-processing | another-processing"
+node-sass-watcher file.scss -c "some-processing | another-processing" -o output.css
 ```
