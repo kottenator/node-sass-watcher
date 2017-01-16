@@ -24,6 +24,22 @@ function testCommandAsync(command, message, check) {
   });
 }
 
+function checkOutputFilePath(filePath) {
+  checkOutputFilePath.cache = checkOutputFilePath.cache || {};
+
+  if (filePath in checkOutputFilePath.cache) {
+    throw new Error("Use other output file path, this one is used: " + filePath);
+  }
+
+  checkOutputFilePath.cache[filePath] = true;
+
+  if (fs.existsSync(filePath)) {
+    fs.unlinkSync(filePath);
+  }
+
+  return filePath;
+}
+
 function checkHelpMessage(output) {
   assert.equal(output.split('\n')[0], "Usage: node-sass-watcher <input.scss> [options]");
   assert.ok(output.indexOf('Error:') == -1);
@@ -122,12 +138,13 @@ describe('CLI', function() {
       }
     });
 
+    // No command, output to stout
     (function() {
       var inputPath = 'test/resources/simple.scss';
 
       testCommandAsync(
         clientPath + ' ' + inputPath,
-        "output contents of the input file to stdout if there is no '-o' option",
+        "output contents of the input file to stdout",
         function(subprocess, done) {
           // file content should appear in the stdout
           subprocess.stdout.on('data', function(data) {
@@ -139,13 +156,10 @@ describe('CLI', function() {
       );
     }());
 
+    // No command, output to file
     (function() {
       var inputPath = 'test/resources/simple.scss';
-      var outputPath = 'test/build/simple.css';
-
-      if (fs.existsSync(outputPath)) {
-        fs.unlinkSync(outputPath);
-      }
+      var outputPath = checkOutputFilePath('test/build/simple-wo-command.css');
 
       testCommandAsync(
         clientPath + ' ' + inputPath + ' -o ' + outputPath,
@@ -164,5 +178,49 @@ describe('CLI', function() {
         }
       );
     }());
+
+    // With command, output to stout
+    (function() {
+      var inputPath = 'test/resources/simple.scss';
+
+      testCommandAsync(
+        clientPath + ' ' + inputPath + ' -c "sed s/red/orange/"',
+        "output results of the command to stdout",
+        function(subprocess, done) {
+          // file content should appear in the stdout
+          subprocess.stdout.on('data', function(data) {
+            assert.equal(
+              data.toString(),
+              fs.readFileSync(inputPath).toString().replace('red', 'orange')
+            );
+            subprocess.kill();
+            done();
+          });
+        }
+      );
+    })();
+
+    // With command, output to file
+    (function() {
+      var inputPath = 'test/resources/simple.scss';
+      var outputPath = checkOutputFilePath('test/build/simple-w-command.css');
+
+      testCommandAsync(
+        clientPath + ' ' + inputPath + ' -c "sed s/red/orange/" -o ' + outputPath,
+        "output results of the command to the output file",
+        function(subprocess, done) {
+          var interval = setInterval(function() {
+            if (fs.existsSync(outputPath)) {
+              assert.equal(
+                fs.readFileSync(inputPath).toString().replace('red', 'orange'),
+                fs.readFileSync(outputPath).toString()
+              );
+              clearInterval(interval);
+              done();
+            }
+          }, 20);
+        }
+      );
+    })();
   });
 });
