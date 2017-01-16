@@ -1,6 +1,6 @@
 {
   "name": "node-sass-watcher",
-  "version": "0.5.0",
+  "version": "0.5.1",
   "description": "SCSS watcher with post-processing.",
   "main": "lib/watcher.js",
   "bin": {
