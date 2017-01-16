@@ -23,7 +23,7 @@ npm install node-sass-watcher
 ## Usage: CLI
 
 ```sh
-node-sass-watcher src/input.scss -o dist/output.css -c "node-sass <input> | cssnano"
+node-sass-watcher src/input.scss -o dist/output.css -c 'node-sass <input> | postcss -u autoprefixer --autoprefixer.browsers="ie >= 9, > 1%"'
 ```
 
 _Note:_ You need to run `node-sass` inside the post-processing command,
@@ -35,7 +35,7 @@ More about `--command` (`-c`):
 * contents of the `input.scss` are passed to the command's `stdin`
 * `<input>` will be replaced with the input file path
 * `<output>` will be replaced with the output file path, provided with `--output` (`-o`) argument (if specified)
-* Shell syntax is allowed: pipes (`|`), FD redirect (`> output.css`), etc
+* Shell syntax is allowed: pipes (`|`), FD redirects (`> output.css`), etc
 
 If there's no `-o` specified, the command output will be printed to `stdout`.
 
@@ -61,6 +61,7 @@ Example: `node-sass` → `autoprefixer`.
 
 ```js
 // watch-it.js
+
 var fs = require('fs');
 var sass = require('node-sass');
 var postcss = require('postcss');
@@ -117,4 +118,4 @@ node watch-it.js src/input.scss dist/output.css "ie >= 9, > 1%"
 
 ## Collaboration
 
-Feel free to create a ticket/pull-request ;)
+Feel free to create a ticket or a pull-request ;)
