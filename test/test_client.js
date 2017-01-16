@@ -1,12 +1,9 @@
 var assert = require('assert');
 var fs = require('fs');
 var exec = require('child_process').exec;
-var spawn = require('child_process').spawn;
 var Client = require('../lib/client');
 var version = require('../package').version;
-var clientPath = 'node-sass-watcher';
-
-process.env.PATH += ':./bin';
+var clientPath = 'bin/node-sass-watcher';
 
 function testCommand(command, message, check) {
   it(message + ' (command: ' + command + ')', function(done) {
@@ -19,7 +16,7 @@ function testCommand(command, message, check) {
 
 function testCommandAsync(command, message, check) {
   it(message + ' (command: ' + command + ')', function(done) {
-    var subprocess = spawn(command, {shell: true});
+    var subprocess = exec(command);
     check(subprocess, done);
   });
 }
@@ -58,7 +55,7 @@ describe('CLI', function() {
   describe('Arguments validation', function() {
     testCommand(
       clientPath,
-      "show help message if there are no arguments",
+      "shows help message if there are no arguments",
       function(err, stdout, stderr) {
         checkHelpMessage(stderr);
       }
@@ -66,7 +63,7 @@ describe('CLI', function() {
 
     testCommand(
       clientPath + ' --help',
-      "show help message if there is '--help' argument",
+      "shows help message if there is '--help' argument",
       function(err, stdout) {
         checkHelpMessage(stdout);
       }
@@ -74,7 +71,7 @@ describe('CLI', function() {
 
     testCommand(
       clientPath + ' -v -h',
-      "show help message if there is '-h' argument, even if args are invalid",
+      "shows help message if there is '-h' argument, even if arguments are invalid",
       function(err, stdout) {
         checkHelpMessage(stdout);
       }
@@ -82,7 +79,7 @@ describe('CLI', function() {
 
     testCommand(
       clientPath + ' --version',
-      "show version if there is '--version' argument",
+      "shows version if there is '--version' argument",
       function(err, stdout) {
         assert.equal(stdout, version + '\n');
       }
@@ -90,7 +87,7 @@ describe('CLI', function() {
 
     testCommand(
       clientPath + ' -v -V',
-      "show version if there is '-V' argument, even if args are invalid",
+      "shows version if there is '-V' argument, even if arguments are invalid",
       function(err, stdout) {
         assert.equal(stdout, version + '\n');
       }
@@ -98,7 +95,7 @@ describe('CLI', function() {
 
     testCommand(
       clientPath + ' -v',
-      "expect at least one input path",
+      "expects at least one input path",
       function(err, stdout, stderr) {
         assert.equal(stderr, Client.prototype.messages.NO_INPUT_PATH + '\n');
       }
@@ -106,7 +103,7 @@ describe('CLI', function() {
 
     testCommand(
       clientPath + ' input-1.scss input-2.scss',
-      "expect no more than one input path",
+      "expects no more than one input path",
       function(err, stdout, stderr) {
         assert.equal(stderr, Client.prototype.messages.EXTRA_POS_ARGS + '\n');
       }
@@ -114,7 +111,7 @@ describe('CLI', function() {
 
     testCommand(
       clientPath + ' input.scss -o output-1.css -o output-2.css',
-      "expect no more than one output path",
+      "expects no more than one output path",
       function(err, stdout, stderr) {
         assert.equal(stderr, Client.prototype.messages.EXTRA_OUTPUT_PATH + '\n');
       }
@@ -122,7 +119,7 @@ describe('CLI', function() {
 
     testCommand(
       clientPath + ' input.scss -r one/ -r two/',
-      "expect no more than one root dir",
+      "expects no more than one root dir",
       function(err, stdout, stderr) {
         assert.equal(stderr, Client.prototype.messages.EXTRA_ROOT_DIR + '\n');
       }
@@ -130,7 +127,7 @@ describe('CLI', function() {
 
     testCommand(
       clientPath + ' input.scss -c "grep A" -c "grep B"',
-      "expect no more than one command",
+      "expects no more than one command",
       function(err, stdout, stderr) {
         assert.equal(stderr, Client.prototype.messages.EXTRA_COMMAND + '\n');
       }
@@ -144,7 +141,7 @@ describe('CLI', function() {
 
       testCommandAsync(
         clientPath + ' ' + inputPath,
-        "output contents of the input file to stdout",
+        "outputs input file contents to stdout",
         function(subprocess, done) {
           // file content should appear in the stdout
           subprocess.stdout.on('data', function(data) {
@@ -163,7 +160,7 @@ describe('CLI', function() {
 
       testCommandAsync(
         clientPath + ' ' + inputPath + ' -o ' + outputPath,
-        "output contents of the input file to the output file",
+        "outputs input file contents to output file",
         function(subprocess, done) {
           var interval = setInterval(function() {
             if (fs.existsSync(outputPath) && fs.statSync(outputPath)['size']) {
@@ -185,7 +182,7 @@ describe('CLI', function() {
 
       testCommandAsync(
         clientPath + ' ' + inputPath + ' -c "sed s/red/orange/"',
-        "output results of the command to stdout",
+        "outputs command results to stdout",
         function(subprocess, done) {
           // file content should appear in the stdout
           subprocess.stdout.on('data', function(data) {
@@ -207,7 +204,7 @@ describe('CLI', function() {
 
       testCommandAsync(
         clientPath + ' ' + inputPath + ' -c "sed s/red/orange/" -o ' + outputPath,
-        "output results of the command to the output file",
+        "outputs command results to output file",
         function(subprocess, done) {
           var interval = setInterval(function() {
             if (fs.existsSync(outputPath) && fs.statSync(outputPath)['size']) {
@@ -231,7 +228,7 @@ describe('CLI', function() {
 
       testCommandAsync(
         clientPath + ' ' + inputPath + ' -c "sed s/red/orange/ | sed s/orange/green/"',
-        "output results of commands pipe to stdout",
+        "outputs command results to stdout, using | in the command",
         function(subprocess, done) {
           // file content should appear in the stdout
           subprocess.stdout.on('data', function(data) {
@@ -254,7 +251,7 @@ describe('CLI', function() {
       testCommandAsync(
         clientPath + ' ' + inputPath +
         ' -c "sed s/red/orange/ | sed s/orange/green/ > ' + outputPath + '"',
-        "output results of commands pipe to a file, using output redirect in the command",
+        "outputs command results to a file, using > in the command",
         function(subprocess, done) {
           var interval = setInterval(function() {
             if (fs.existsSync(outputPath) && fs.statSync(outputPath)['size']) {
