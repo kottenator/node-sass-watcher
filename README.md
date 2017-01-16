@@ -2,7 +2,7 @@
 
 [![Build Status](https://travis-ci.org/kottenator/node-sass-watcher.svg?branch=master)](https://travis-ci.org/kottenator/node-sass-watcher)
 
-![Logo](media/node-sass-watcher-logo.svg)
+![Logo](media/node-sass-watcher-logo.png)
 
 SCSS watcher with post-processing.
 
@@ -27,12 +27,12 @@ node-sass-watcher src/input.scss -o dist/output.css -c "node-sass <input> | cssn
 ```
 
 _Note:_ You need to run `node-sass` inside the post-processing command,
-because I don't want to deal with all `node-sass` CLI arguments.
-Though, I may change my mind in the future.
+because I don't want to deal with all `node-sass` CLI arguments. 
+In fact, current implementation is `node-sass`-independent. 
 
 More about `--command` (`-c`):
 
-* contents of the `input.scss` are passed as `stdin`
+* contents of the `input.scss` are passed to the command's `stdin`
 * `<input>` will be replaced with the input file path
 * `<output>` will be replaced with the output file path, provided with `--output` (`-o`) argument (if specified)
 * Shell syntax is allowed: pipes (`|`), FD redirect (`> output.css`), etc
