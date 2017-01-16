@@ -2,7 +2,7 @@
 
 [![Build Status](https://travis-ci.org/kottenator/node-sass-watcher.svg?branch=master)](https://travis-ci.org/kottenator/node-sass-watcher)
 
-![Logo](media/node-sass-watcher-logo.png)
+<img src="media/node-sass-watcher-logo.svg" alt="Logo" height="200">
 
 SCSS watcher with post-processing.
 
