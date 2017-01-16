@@ -49,6 +49,12 @@ describe('CLI', function() {
   // expect tests to be slow, due to nature of the CLI (invoking sub-processes)
   this.slow(500);
 
+  before(function() {
+    if (!fs.existsSync('test/build/')) {
+      fs.mkdirSync('test/build/');
+    }
+  });
+
   describe('Arguments validation', function() {
     testCommand(
       clientPath,
@@ -131,13 +137,7 @@ describe('CLI', function() {
     );
   });
 
-  describe('Run', function() {
-    before(function() {
-      if (!fs.existsSync('test/build/')) {
-        fs.mkdirSync('test/build/');
-      }
-    });
-
+  describe('Simple run', function() {
     // No command, output to stout
     (function() {
       var inputPath = 'test/resources/simple.scss';
@@ -154,7 +154,7 @@ describe('CLI', function() {
           });
         }
       );
-    }());
+    })();
 
     // No command, output to file
     (function() {
@@ -166,7 +166,7 @@ describe('CLI', function() {
         "output contents of the input file to the output file",
         function(subprocess, done) {
           var interval = setInterval(function() {
-            if (fs.existsSync(outputPath)) {
+            if (fs.existsSync(outputPath) && fs.statSync(outputPath)['size']) {
               assert.equal(
                 fs.readFileSync(inputPath).toString(),
                 fs.readFileSync(outputPath).toString()
@@ -177,7 +177,7 @@ describe('CLI', function() {
           }, 20);
         }
       );
-    }());
+    })();
 
     // With command, output to stout
     (function() {
@@ -210,9 +210,56 @@ describe('CLI', function() {
         "output results of the command to the output file",
         function(subprocess, done) {
           var interval = setInterval(function() {
-            if (fs.existsSync(outputPath)) {
+            if (fs.existsSync(outputPath) && fs.statSync(outputPath)['size']) {
               assert.equal(
                 fs.readFileSync(inputPath).toString().replace('red', 'orange'),
+                fs.readFileSync(outputPath).toString()
+              );
+              clearInterval(interval);
+              done();
+            }
+          }, 20);
+        }
+      );
+    })();
+  });
+
+  describe('Complex run', function() {
+    // Pipe
+    (function() {
+      var inputPath = 'test/resources/simple.scss';
+
+      testCommandAsync(
+        clientPath + ' ' + inputPath + ' -c "sed s/red/orange/ | sed s/orange/green/"',
+        "output results of commands pipe to stdout",
+        function(subprocess, done) {
+          // file content should appear in the stdout
+          subprocess.stdout.on('data', function(data) {
+            assert.equal(
+              data.toString(),
+              fs.readFileSync(inputPath).toString().replace('red', 'green')
+            );
+            subprocess.kill();
+            done();
+          });
+        }
+      );
+    })();
+
+    // Output redirect
+    (function() {
+      var inputPath = 'test/resources/simple.scss';
+      var outputPath = checkOutputFilePath('test/build/simple-redirect.css');
+
+      testCommandAsync(
+        clientPath + ' ' + inputPath +
+        ' -c "sed s/red/orange/ | sed s/orange/green/ > ' + outputPath + '"',
+        "output results of commands pipe to a file, using output redirect in the command",
+        function(subprocess, done) {
+          var interval = setInterval(function() {
+            if (fs.existsSync(outputPath) && fs.statSync(outputPath)['size']) {
+              assert.equal(
+                fs.readFileSync(inputPath).toString().replace('red', 'green'),
                 fs.readFileSync(outputPath).toString()
               );
               clearInterval(interval);
