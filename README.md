@@ -6,7 +6,7 @@
 
 SCSS watcher with post-processing.
 
-# Why?
+## Why?
 
 `node-sass` has `--watch` option but it doesn't allow post-processing of the compiled CSS.
 
