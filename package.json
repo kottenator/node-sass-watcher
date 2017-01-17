@@ -1,6 +1,6 @@
 {
   "name": "node-sass-watcher",
-  "version": "0.5.1",
+  "version": "0.5.2",
   "description": "SCSS watcher with post-processing.",
   "main": "lib/watcher.js",
   "bin": {
@@ -9,7 +9,6 @@
   "dependencies": {
     "lodash.difference": "^4.5.0",
     "yargs": "^6.6.0",
-    "gaze": "^1.1.2",
     "chokidar": "^1.6.1",
     "sass-graph": "^2.1.2"
   },
