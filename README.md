@@ -121,12 +121,15 @@ Run your custom script:
 node watch-it.js src/input.scss dist/output.css "ie >= 9, > 1%"
 ```
 
+
 Available options are a subset of the CLI options:
 
-* includePaths
-* rootDir
-* verbosity
-* includeExtensions
+```
+includePaths
+rootDir
+verbosity
+includeExtensions
+```
 
 ## Collaboration
 
