@@ -27,8 +27,8 @@ node-sass-watcher src/input.scss -o dist/output.css -c 'node-sass <input> | post
 ```
 
 _Note:_ You need to run `node-sass` inside the post-processing command,
-because I don't want to deal with all `node-sass` CLI arguments. 
-In fact, current implementation is `node-sass`-independent. 
+because I don't want to deal with all `node-sass` CLI arguments.
+In fact, current implementation is `node-sass`-independent.
 
 More about `--command` (`-c`):
 
@@ -73,6 +73,11 @@ var inputFile = process.argv[2];
 var outputFile = process.argv[3];
 var supportedBrowsers = process.argv[4];
 
+// Options
+var watcherOptions = {
+  verbosity: 1,
+}
+
 // Renderer
 function render() {
   console.warn('Rendering "' + inputFile + '" file...');
@@ -104,7 +109,7 @@ function render() {
 }
 
 // Start watching
-var watcher = new Watcher(inputFile);
+var watcher = new Watcher(inputFile, watcherOptions);
 watcher.on('init', render);
 watcher.on('update', render);
 watcher.run();
@@ -113,8 +118,16 @@ watcher.run();
 Run your custom script:
 
 ```sh
-node watch-it.js src/input.scss dist/output.css "ie >= 9, > 1%" 
+node watch-it.js src/input.scss dist/output.css "ie >= 9, > 1%"
 ```
+
+
+Available options are a subset of the CLI options:
+
+* `includePaths`
+* `rootDir`
+* `verbosity`
+* `includeExtensions`
 
 ## Collaboration
 
